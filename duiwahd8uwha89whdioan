@@ -1,4 +1,4 @@
-
+print("Test2")
 if not LPH_OBFUSCATED then
     LPH_JIT_MAX = function(...) return ... end
     LPH_NO_VIRTUALIZE = function(f) return f end
@@ -1796,7 +1796,7 @@ local Library do
                 local btnBottom = btnTop + Items["RealDropdown"].Instance.AbsoluteSize.Y
                 local dropW = Items["RealDropdown"].Instance.AbsoluteSize.X
                 local dropH = Dropdown.MaxSize
-                local win = Colorpicker.Items["ColorpickerWindow"].Instance
+                local win = Items["ColorpickerWindow"].Instance
                 local cx, cy = win.AbsolutePosition.X, win.AbsolutePosition.Y
                 local cw, ch = win.AbsoluteSize.X, win.AbsoluteSize.Y
                 local pad = 8
