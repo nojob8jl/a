@@ -1,4 +1,4 @@
-print("Test2")
+
 if not LPH_OBFUSCATED then
     LPH_JIT_MAX = function(...) return ... end
     LPH_NO_VIRTUALIZE = function(f) return f end
@@ -1788,6 +1788,36 @@ local Library do
                 end
             end
 
+            local function updateOptionHolderPosition()
+                if not Library or not Items["OptionHolder"].Instance.Parent then return end
+                local Scale = (Library.UIScaleNum) or 1
+                local dropOx = Items["RealDropdown"].Instance.AbsolutePosition.X
+                local btnTop = Items["RealDropdown"].Instance.AbsolutePosition.Y
+                local btnBottom = btnTop + Items["RealDropdown"].Instance.AbsoluteSize.Y
+                local dropW = Items["RealDropdown"].Instance.AbsoluteSize.X
+                local dropH = Dropdown.MaxSize
+                local win = Colorpicker.Items["ColorpickerWindow"].Instance
+                local cx, cy = win.AbsolutePosition.X, win.AbsolutePosition.Y
+                local cw, ch = win.AbsoluteSize.X, win.AbsoluteSize.Y
+                local pad = 8
+                local left = math.max(dropOx, cx + pad)
+                local right = math.min(dropOx + dropW, cx + cw - pad)
+                local outW = right - left
+                local spaceBelow = (cy + ch - pad) - (btnBottom + 5)
+                local top, outH
+                if spaceBelow >= dropH then
+                    top = btnBottom + 5
+                    local bottom = math.min(top + dropH, cy + ch - pad)
+                    outH = bottom - top
+                else
+                    local listBottom = btnTop - 5
+                    top = math.max(listBottom - dropH, cy + pad)
+                    outH = listBottom - top
+                end
+                Items["OptionHolder"].Instance.Position = UDim2New(0, left / Scale, 0, top / Scale)
+                Items["OptionHolder"].Instance.Size = UDim2New(0, outW / Scale, 0, outH / Scale)
+            end
+
             function Dropdown:SetOpen(Bool)
                 if Debounce then 
                     return
@@ -1798,37 +1828,13 @@ local Library do
                 Debounce = true 
 
                 if Dropdown.IsOpen then 
-                    Items["OptionHolder"].Instance.Visible = true
                     Items["OptionHolder"].Instance.Parent = Library.Holder.Instance
-                    
+                    updateOptionHolderPosition()
+                    Items["OptionHolder"].Instance.Visible = true
+
                     RenderStepped = RunService.RenderStepped:Connect(function()
                         if not Library then return end
-                        local Scale = (Library.UIScaleNum) or 1
-                        local dropOx = Items["RealDropdown"].Instance.AbsolutePosition.X
-                        local btnTop = Items["RealDropdown"].Instance.AbsolutePosition.Y
-                        local btnBottom = btnTop + Items["RealDropdown"].Instance.AbsoluteSize.Y
-                        local dropW = Items["RealDropdown"].Instance.AbsoluteSize.X
-                        local dropH = Dropdown.MaxSize
-                        local win = Colorpicker.Items["ColorpickerWindow"].Instance
-                        local cx, cy = win.AbsolutePosition.X, win.AbsolutePosition.Y
-                        local cw, ch = win.AbsoluteSize.X, win.AbsoluteSize.Y
-                        local pad = 8
-                        local left = math.max(dropOx, cx + pad)
-                        local right = math.min(dropOx + dropW, cx + cw - pad)
-                        local outW = right - left
-                        local spaceBelow = (cy + ch - pad) - (btnBottom + 5)
-                        local top, outH
-                        if spaceBelow >= dropH then
-                            top = btnBottom + 5
-                            local bottom = math.min(top + dropH, cy + ch - pad)
-                            outH = bottom - top
-                        else
-                            local listBottom = btnTop - 5
-                            top = math.max(listBottom - dropH, cy + pad)
-                            outH = listBottom - top
-                        end
-                        Items["OptionHolder"].Instance.Position = UDim2New(0, left / Scale, 0, top / Scale)
-                        Items["OptionHolder"].Instance.Size = UDim2New(0, outW / Scale, 0, outH / Scale)
+                        updateOptionHolderPosition()
                     end)
 
                     for Index, Value in Library.OpenFrames do 
@@ -2382,6 +2388,27 @@ local Library do
     
             Library.SetFlags[Colorpicker.Flag] = function(Value, Alpha)
                 Colorpicker:Set(Value, Alpha)
+            end
+
+            Library.SetFlags[Dropdown.Flag] = function(Value)
+                if type(Value) == "string" then
+                    Value = { Value }
+                end
+                if type(Value) ~= "table" then
+                    Value = { }
+                end
+                Dropdown.Value = Value
+                Library.Flags[Dropdown.Flag] = Dropdown.Value
+                local TextFormat = #Dropdown.Value > 0 and TableConcat(Dropdown.Value, ", ") or "..."
+                Items["Value"].Instance.Text = TextFormat
+                for OptName, OptionData in Dropdown.Options do
+                    local selected = TableFind(Dropdown.Value, OptName)
+                    OptionData.Selected = selected ~= nil
+                    OptionData:Toggle(selected and "Active" or "Inactive")
+                end
+                if Dropdown.Callback then
+                    Library:SafeCall(Dropdown.Callback, Dropdown.Value)
+                end
             end
 
             return Colorpicker, Items 
